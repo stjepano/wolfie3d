@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(wolfie3d C)
 set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED 23)
 
 add_subdirectory(external/glad)
 add_subdirectory(external/glfw)

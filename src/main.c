@@ -45,40 +45,40 @@ static void handle_framebuffer_resize(GLFWwindow *window, int width, int height)
     int w = MAX(width, 1);
     int h = MAX(height, 1);
 
+    int vpx, vpy, vpw, vph;
     if (w >= SURFACE_WIDTH && h >= SURFACE_HEIGHT)
     {
         // support only integer scaling to avoid artifacts (to be pixel perfect)
-        int sw = (float)w / (float)SURFACE_WIDTH;
-        int sh = (float)h / (float)SURFACE_HEIGHT;
-        int iscale_factor = MAX(MIN(sw, sh), 1);
+        int sw = w / SURFACE_WIDTH;
+        int sh = h / SURFACE_HEIGHT;
+        int iscale_factor = MIN(sw, sh);
 
-        int rw = SURFACE_WIDTH * iscale_factor;
-        int rh = SURFACE_HEIGHT * iscale_factor;
+        vpw = SURFACE_WIDTH * iscale_factor;
+        vph = SURFACE_HEIGHT * iscale_factor;
 
-        int vpx = (w - rw) / 2;
-        int vpy = (h - rh) / 2;
-        printf("Viewport: %dx%d at (%d, %d)\n", rw, rh, vpx, vpy);
-        glViewport(vpx, vpy, rw, rh);
+        vpx = (w - vpw) / 2;
+        vpy = (h - vph) / 2;
     }
     else
     {
-        // we resized the window so one or both dimensions are smaller than the surface
-        float aspect_ratio = (float)SURFACE_WIDTH / (float)SURFACE_HEIGHT;
-        int rw = w;
-        int rh = h;
-        if (rw < rh)
+        // one of the framebuffer dimensions is smaller than the surface, we will scale the surface to fit the window while preserving the aspect ratio
+        const float fb_aspect_ratio = (float)w / (float)h;
+        const float surface_aspect_ratio = (float)SURFACE_WIDTH / (float)SURFACE_HEIGHT;
+        vpw = w;
+        vph = h;
+        if (fb_aspect_ratio < surface_aspect_ratio)
         {
-            rh = (int)((float)rw / aspect_ratio);
+            vph = (int)((float)vpw / surface_aspect_ratio);
         }
         else
         {
-            rw = (int)((float)rh * aspect_ratio);
+            vpw = (int)((float)vph * surface_aspect_ratio);
         }
-        int vpx = (w - rw) / 2;
-        int vpy = (h - rh) / 2;
-        printf("Viewport: %dx%d at (%d, %d)\n", rw, rh, vpx, vpy);
-        glViewport(vpx, vpy, rw, rh);
+        vpx = (w - vpw) / 2;
+        vpy = (h - vph) / 2;
     }
+    printf("Viewport: %dx%d at (%d, %d)\n", vpw, vph, vpx, vpy);
+    glViewport(vpx, vpy, vpw, vph);
 }
 
 static void handle_key_input(GLFWwindow *window, int key, int scancode, int action, int mods)
@@ -138,6 +138,7 @@ static bool init_opengl()
         glDeleteShader(vertex_shader);
         glDeleteShader(fragment_shader);
         glDeleteProgram(g_program);
+        g_program = 0;
         return false;
     }
 
@@ -146,6 +147,9 @@ static bool init_opengl()
     glDeleteShader(fragment_shader);
 
     glGenVertexArrays(1, &g_vao);
+
+    glBindVertexArray(g_vao);
+    glUseProgram(g_program);
     return true;
 }
 
@@ -155,6 +159,11 @@ static void cleanup_opengl()
     {
         glDeleteProgram(g_program);
         g_program = 0;
+    }
+    if (g_vao)
+    {
+        glDeleteVertexArrays(1, &g_vao);
+        g_vao = 0;
     }
 }
 
@@ -199,8 +208,7 @@ int main(int argc, char **argv)
         glfwTerminate();
         return 1;
     }
-    glBindVertexArray(g_vao);
-    glUseProgram(g_program);
+    
 
     GLfloat clear_color[] = {0.1f, 0.1f, 0.1f, 1.0f};
 
