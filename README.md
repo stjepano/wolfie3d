@@ -12,6 +12,20 @@ The core focus is implementing proper raycasting and texture mapping for walls. 
 
 Further features will be decided as the project develops. There are no build or run instructions yet.
 
-## How we work
+## Build
 
-The project owner writes the code. Codex provides explanations, guidance, and help reasoning through implementation choices. Direct changes by Codex require an explicit request. See [AGENTS.md](AGENTS.md) for the standing collaboration instructions.
+### Debug build
+
+```shell
+mkdir build
+cmake -S . -B build/ -DCMAKE_BUILD_TYPE=Debug
+cmake --build ./build
+```
+
+### Release build
+
+```shell
+mkdir build
+cmake -S . -B build/ -DCMAKE_BUILD_TYPE=Release
+cmake --build ./build
+```
